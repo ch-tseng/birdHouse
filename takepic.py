@@ -26,7 +26,7 @@ MQTTtimeout = 60
 
 #拍照設定--------------------------------------
 #儲放相片的主目錄
-picturesPath = "/var/www/html/birdHouse/"
+picturesPath = "/var/www/html/birdhouse/"
 #相機旋轉角度
 cameraRotate = 0
 #拍攝的相片尺寸
@@ -166,10 +166,11 @@ def on_log(mosq, obj, level, string):
 
 def MOTION(pinPIR):
     print("found birds!!!")
+    camera.videoRecord(videoPath="/var/www/html/birdhouse/", startDelaySeconds=0, Continuous=True, delayContinusSeconds=0, ContinusTotalCount=5)
 
 temperature, humandity = sensorDHT.getData()
 
-GPIO.output(pinLED_GREEN, GPIO.HIGH)
+GPIO.output(pinLED_BLUE, GPIO.HIGH)
 
 #Register----------------------------------------------
 GPIO.add_event_detect(pinPIR, GPIO.RISING, callback=MOTION)
@@ -192,6 +193,8 @@ mqttc.connect(MQTTaddress, MQTTport, MQTTtimeout)
 while True:
     #lcd.displayImg("rfidbg.jpg")
     print (GPIO.input(pinPIR))
+
+    #takePictures("birds")    
     time.sleep(1)
 
 # Continue the network loop

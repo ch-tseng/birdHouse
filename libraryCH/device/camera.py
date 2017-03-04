@@ -3,6 +3,7 @@
 
 import picamera
 import time
+import datetime
 
 class PICamera:
     def __init__(self):
@@ -79,6 +80,18 @@ class PICamera:
         #if self.preview == True:
         #   self.camera.stop_preview()
          
+    def videoRecord(self, videoPath="", startDelaySeconds=0, Continuous=False, delayContinusSeconds=5, ContinusTotalCount=0):
+        st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M-')
+        videoFile = videoPath + st+"1.h264"
+        self.camera.start_recording(videoFile)
+        if(Continuous==True):
+            self.camera.wait_recording(delayContinusSeconds)
+            for i in range(2, ContinusTotalCount):
+                videoFile = videoPath + st + ('%d.h264' % i)
+                self.camera.split_recording(videoFile)
+                self.camera.wait_recording(delayContinusSeconds)
 
+        self.camera.stop_recording()
+   
     def powerOff(self):
         self.camera.close()
