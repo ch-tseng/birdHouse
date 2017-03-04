@@ -9,6 +9,15 @@ from libraryCH.device.camera import PICamera
 from libraryCH.device.lcd import ILI9341
 from libraryCH.device.sensors import DHT
 
+#PIR觸動後，每段錄影的長度(分鐘)
+minVideoLength = 3
+#PIR觸動後，是否要持續不斷的錄影？若為True, 則countVideos沒有作用
+recordNeverStop = True
+#PIR觸動後，要錄幾段影片
+countVideos = 2
+#PIR觸動後，要等幾秒再開始錄影
+waitDelaySeconds = 0
+
 #LCD顯示設定------------------------------------
 lcd = ILI9341(LCD_size_w=240, LCD_size_h=320, LCD_Rotate=90)
 
@@ -23,6 +32,8 @@ MQTTpwd = "chtseng"
 MQTTaddress = "akai-chen-pc3.sunplusit.com.tw"
 MQTTport = 1883
 MQTTtimeout = 60
+
+volumeVoice = 2000
 
 #拍照設定--------------------------------------
 #儲放相片的主目錄
@@ -154,6 +165,19 @@ def on_message(mosq, obj, msg):
         lcd.displayText("cfont1.ttf", fontSize=24, text=msgReceived, position=(lcd_Line2Pixel(0), 10) )
         logger.info('Unknow ID: ' + msgReceived)
 
+def playVoices():
+    dt = list(time.localtime())
+    nowHour = dt[3]
+    nowMinute = dt[4]
+
+    #mp3Number = str(random.randint(1, 3))
+
+    #if(nowHour<10 and nowHour>=6):
+    #    os.system('omxplayer --no-osd voice/gowork' + mp3Number + '.mp3')
+    #if(nowHour<22 and ((nowHour==17 and nowMinute>30) or (nowHour>=18)) ):
+    #    os.system('omxplayer --no-osd voice/afterwork' + mp3Number + '.mp3')
+    os.system('omxplayer --no-osd --vol '+str(volumeVoice) + ' voice/bird1.mp3')
+
 def on_publish(mosq, obj, mid):
     print("mid: " + str(mid))
 
@@ -166,7 +190,9 @@ def on_log(mosq, obj, level, string):
 
 def MOTION(pinPIR):
     print("found birds!!!")
-    camera.videoRecord(videoPath="/var/www/html/birdhouse/", startDelaySeconds=0, Continuous=True, delayContinusSeconds=0, ContinusTotalCount=5)
+    if(camera.busy()==False):
+        camera.videoRecord(videoPath="/var/www/html/birdhouse/", startDelaySeconds=waitDelaySeconds, Continuous=recordNeverStop, 
+            ContinusTotalCount=countVideos, videoMinutesLength=minVideoLength)
 
 temperature, humandity = sensorDHT.getData()
 
@@ -190,12 +216,14 @@ mqttc.username_pw_set(MQTTuser, MQTTpwd)
 mqttc.connect(MQTTaddress, MQTTport, MQTTtimeout)
 '''
 
+i=0
 while True:
     #lcd.displayImg("rfidbg.jpg")
-    print (GPIO.input(pinPIR))
-
+    print ("{} PIR:{} Recording:{} ".format( i, GPIO.input(pinPIR), camera.busy()))
+        
     #takePictures("birds")    
     time.sleep(1)
+    i += 1
 
 # Continue the network loop
 #mqttc.loop_forever()

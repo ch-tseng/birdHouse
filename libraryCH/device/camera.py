@@ -8,6 +8,7 @@ import datetime
 class PICamera:
     def __init__(self):
         self.camera = picamera.PiCamera()
+        self.recording = False
 
     def CameraConfig(self, sharpness=0, contrast=0, brightness=50, saturation=0, 
                            iso=0, video_stabilization=False,exposure_compensation=0, 
@@ -67,7 +68,8 @@ class PICamera:
                           Continuous=False, delayContinusSeconds=5, ContinusTotalCount=0):
         #if(self.preview) == True:
         #    self.camera.start_preview()
-        
+        self.recording = True
+
         time.sleep(startDelaySeconds)
         if(Continuous==True):
             if(ContinusTotalCount==0): ContinusTotalCount=99999999999
@@ -79,19 +81,38 @@ class PICamera:
 
         #if self.preview == True:
         #   self.camera.stop_preview()
+        self.recording = False
          
-    def videoRecord(self, videoPath="", startDelaySeconds=0, Continuous=False, delayContinusSeconds=5, ContinusTotalCount=0):
-        st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M-')
-        videoFile = videoPath + st+"1.h264"
+    def videoRecord(self, videoPath="", startDelaySeconds=0, Continuous=False, ContinusTotalCount=0, videoMinutesLength=5):
+        st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M')
+        self.recording = True
+
+        if(Continuous==True or ContinusTotalCount>0):
+            videoFile = videoPath + st+"-1.h264"
+        else:
+            videoFile = videoPath + st+".h264"
+
         self.camera.start_recording(videoFile)
         if(Continuous==True):
-            self.camera.wait_recording(delayContinusSeconds)
-            for i in range(2, ContinusTotalCount):
-                videoFile = videoPath + st + ('%d.h264' % i)
+            i = 2
+            while True:
+                videoFile = videoPath + st + ('-%d.h264' % i)
                 self.camera.split_recording(videoFile)
-                self.camera.wait_recording(delayContinusSeconds)
+                self.camera.wait_recording(videoMinutesLength*60)
+                i += 1
+
+        elif(ContinusTotalCount>0):
+            self.camera.wait_recording(videoMinutesLength*60)
+            for i in range(2, ContinusTotalCount):
+                videoFile = videoPath + st + ('-%d.h264' % i)
+                self.camera.split_recording(videoFile)
+                self.camera.wait_recording(videoMinutesLength*60)
 
         self.camera.stop_recording()
+        self.recording = False
+
+    def busy(self):
+        return self.recording
    
     def powerOff(self):
         self.camera.close()
