@@ -12,7 +12,7 @@ from libraryCH.device.sensors import DHT
 #PIR觸動後，每段錄影的長度(分鐘)
 minVideoLength = 3
 #PIR觸動後，是否要持續不斷的錄影？若為True, 則countVideos沒有作用
-recordNeverStop = True
+recordNeverStop = False
 #PIR觸動後，要錄幾段影片
 countVideos = 2
 #PIR觸動後，要等幾秒再開始錄影
@@ -188,11 +188,16 @@ def on_subscribe(mosq, obj, mid, granted_qos):
 def on_log(mosq, obj, level, string):
     print(string)
 
+def youtubeStream(url, secret):
+    urlString = "sudo raspivid -o - -t 0 -vf -hf -fps 30 -b 6000000 | avconv -re -ar 44100 -ac 2 -acodec pcm_s16le -f s16le -ac 2 -i /dev/zero -f h264 -i - -vcodec copy -acodec aac -ab 128k -g 50 -strict experimental -f flv rtmp://" + url + "/" + secret
+    os.system(urlString)
+
 def MOTION(pinPIR):
     print("found birds!!!")
-    if(camera.busy()==False):
-        camera.videoRecord(videoPath="/var/www/html/birdhouse/", startDelaySeconds=waitDelaySeconds, Continuous=recordNeverStop, 
-            ContinusTotalCount=countVideos, videoMinutesLength=minVideoLength)
+    #if(camera.busy()==False):
+    #    camera.videoRecord(videoPath="/var/www/html/birdhouse/", startDelaySeconds=waitDelaySeconds, Continuous=recordNeverStop, 
+    #        ContinusTotalCount=countVideos, videoMinutesLength=minVideoLength)
+    youtubeStream(url="rtmp://a.rtmp.youtube.com/live2", secret="ysqc-sx8y-thq9-de7b")
 
 temperature, humandity = sensorDHT.getData()
 

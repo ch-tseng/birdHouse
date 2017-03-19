@@ -93,6 +93,8 @@ class PICamera:
             videoFile = videoPath + st+".h264"
 
         self.camera.start_recording(videoFile)
+        self.camera.wait_recording(videoMinutesLength*60)
+
         if(Continuous==True):
             i = 2
             while True:
@@ -103,7 +105,7 @@ class PICamera:
 
         elif(ContinusTotalCount>0):
             self.camera.wait_recording(videoMinutesLength*60)
-            for i in range(2, ContinusTotalCount):
+            for i in range(2, ContinusTotalCount+1):
                 videoFile = videoPath + st + ('-%d.h264' % i)
                 self.camera.split_recording(videoFile)
                 self.camera.wait_recording(videoMinutesLength*60)
